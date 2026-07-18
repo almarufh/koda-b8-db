@@ -162,7 +162,7 @@ erDiagram
         bigint price_per_item
     }
 
-    user_tokens {
+    tokens {
         bigint id PK
         varchar id_user FK
         text refresh_token UK
