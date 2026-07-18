@@ -162,6 +162,18 @@ erDiagram
         bigint price_per_item
     }
 
+    user_tokens {
+        bigint id PK
+        varchar id_user FK
+        text refresh_token UK
+        varchar device_name
+        varchar ip_address
+        boolean is_revoked
+        timestamp created_at
+        timestamp expired_at
+    }
+
+    users ||--o{ user_tokens : generates
     users ||--|| balances : has
     users ||--o{ balance_histories : tracks
     users ||--|| profiles : has
