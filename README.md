@@ -27,12 +27,11 @@ erDiagram
         varchar first_name
         varchar last_name
         date date_of_birth
-        text address
         varchar mother
         timestamp created_at
         timestamp updated_at
     }
-    
+
     addresses {
         bigint id PK
         varchar id_user FK
@@ -86,11 +85,12 @@ erDiagram
 
     users ||--|| balances : has
     users ||--|| profiles : has
+    users ||--o{ addresses : saves
     users ||--o{ otp : requests
     users ||--o{ users_changes_history : logs
     otp ||--o{ users_changes_history : verifies
     users ||--o{ topup : initiates
     users ||--o{ transactions : sends
     users ||--o{ transactions : receives
-    
+        
 ```
