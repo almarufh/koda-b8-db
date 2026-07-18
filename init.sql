@@ -1,0 +1,184 @@
+-- 1. Tabel Users
+CREATE TABLE users (
+    id VARCHAR(13) UNIQUE PRIMARY KEY,
+    email VARCHAR(40) UNIQUE NOT NULL,
+    password VARCHAR(20) NOT NULL,
+    pin VARCHAR(6),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+);
+
+-- 2. Tabel Balances
+CREATE TABLE balances (
+    id_user VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    balance BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Tabel Balance Histories
+CREATE TABLE balance_histories (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    mutation_type VARCHAR(50) NOT NULL,
+    amount BIGINT NOT NULL,
+    before_balance BIGINT NOT NULL,
+    after_balance BIGINT NOT NULL,
+    reference_type VARCHAR(100) NOT NULL,
+    reference_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Tabel Profiles
+CREATE TABLE profiles (
+    id_user VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    date_of_birth DATE,
+    mother VARCHAR(100),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. Tabel Addresses
+CREATE TABLE addresses (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    label_alamat VARCHAR(100),
+    full_address TEXT NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Tabel OTP
+CREATE TABLE otp (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code VARCHAR(50) NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expired_at TIMESTAMP NOT NULL
+);
+
+-- 7. Tabel Users Changes History
+CREATE TABLE users_changes_history (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id_otp BIGINT REFERENCES otp(id) ON DELETE SET NULL,
+    change_type VARCHAR(100) NOT NULL,
+    old_value TEXT,
+    new_value TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. Tabel Topup
+CREATE TABLE topup (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    reference_code VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. Tabel Transfers
+CREATE TABLE transfers (
+    id BIGSERIAL PRIMARY KEY,
+    id_user_sender VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    id_user_receiver VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    amount BIGINT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Tabel Categories
+CREATE TABLE categories (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL
+);
+
+-- 11. Tabel Discounts
+CREATE TABLE discounts (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    value BIGINT NOT NULL,
+    start_at TIMESTAMP NOT NULL,
+    end_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Tabel Products
+CREATE TABLE products (
+    id BIGSERIAL PRIMARY KEY,
+    id_category BIGINT REFERENCES categories(id) ON DELETE SET NULL,
+    id_discount BIGINT REFERENCES discounts(id) ON DELETE SET NULL,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    price BIGINT NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+);
+
+-- 13. Tabel Product Images
+CREATE TABLE product_images (
+    id BIGSERIAL PRIMARY KEY,
+    id_product BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    image_url VARCHAR(255) NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. Tabel Carts
+CREATE TABLE carts (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id_product BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    quantity INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. Tabel Orders
+CREATE TABLE orders (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    id_address BIGINT REFERENCES addresses(id) ON DELETE RESTRICT,
+    total_items_price BIGINT NOT NULL,
+    shipping_fee BIGINT NOT NULL DEFAULT 0,
+    total_amount BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    invoice_number VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 16. Tabel Order Items
+CREATE TABLE order_items (
+    id BIGSERIAL PRIMARY KEY,
+    id_order BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    id_product BIGINT REFERENCES products(id) ON DELETE SET NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    price_per_item BIGINT NOT NULL
+);
+
+-- 17. Tabel Tokens
+CREATE TABLE tokens (
+    id BIGSERIAL PRIMARY KEY,
+    id_user VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    refresh_token TEXT UNIQUE NOT NULL,
+    device_name VARCHAR(255),
+    ip_address VARCHAR(45),
+    is_revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expired_at TIMESTAMP NOT NULL
+);
